@@ -1,36 +1,151 @@
 @import "tailwindcss";
 
-/* ManyChat Alternative — Design System
-   Plain and functional. No gradients, glass, glow, or animation. */
+/* OpenReply — Design System
+   Dark, calm, one saturated accent. Depth comes from layered surfaces and a
+   single ambient glow, not from borders shouting for attention. */
 
 @theme inline {
-  --color-background: #ffffff;
-  --color-foreground: #18181b;
-  --color-surface: #f7f7f8;
-  --color-surface-hover: #efeff1;
-  --color-border: #e4e4e7;
-  --color-border-hover: #d4d4d8;
-  --color-muted: #71717a;
-  --color-accent: #f97316;
-  --color-accent-hover: #ea580c;
-  --color-success: #16a34a;
-  --color-error: #dc2626;
-  --color-warning: #d97706;
+  /* Grounds — near-black with a faint cool cast, so it reads as considered
+     rather than as pure #000. */
+  --color-background: #08090a;
+  --color-surface: #111315;
+  --color-surface-hover: #191c1f;
+
+  /* Hairlines. Low contrast on purpose: structure should be felt, not read. */
+  --color-border: #22262a;
+  --color-border-hover: #323840;
+
+  --color-foreground: #f2f4f3;
+  --color-muted: #8b9299;
+
+  /* The one saturated thing on the page. */
+  --color-accent: #3ecf8e;
+  --color-accent-hover: #34b87b;
+
+  --color-success: #3ecf8e;
+  --color-error: #f87171;
+  --color-warning: #fbbf24;
+
   --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, monospace;
 }
 
 html {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
   background: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Focus ring — visible, for keyboard users. */
+/* Ambient glow — one soft green bloom behind everything, fixed so it doesn't
+   travel on scroll. This is what stops a dark page from reading as flat grey. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(60rem 32rem at 50% -12%, rgba(62, 207, 142, 0.10), transparent 70%),
+    radial-gradient(40rem 24rem at 100% 0%, rgba(62, 207, 142, 0.05), transparent 65%);
+}
+
+/* Keep real content above the bloom. */
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- Surfaces ------------------------------------------------------------ */
+
+/* Panels lift off the ground with a soft shadow instead of a hard outline. */
+.panel,
+.glass,
+.glass-strong {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.03) inset,
+    0 8px 24px -12px rgba(0, 0, 0, 0.7);
+}
+
+.glass,
+.glass-strong {
+  background: color-mix(in oklab, var(--color-surface) 82%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+/* Anything Tailwind renders from the surface token gets the same softening. */
+[class*="bg-surface"] {
+  border-radius: 0.75rem;
+}
+
+.gradient-mesh {
+  background:
+    radial-gradient(48rem 28rem at 50% 0%, rgba(62, 207, 142, 0.12), transparent 70%);
+}
+
+/* ---- Accent -------------------------------------------------------------- */
+
+/* The accent carries a glow so primary actions read as the live thing on the
+   page. Kept tight so it reads as emission, not as a blurry halo. */
+[class*="bg-accent"] {
+  box-shadow:
+    0 0 0 1px rgba(62, 207, 142, 0.28),
+    0 6px 20px -8px rgba(62, 207, 142, 0.55);
+}
+
+[class*="bg-accent"]:hover {
+  box-shadow:
+    0 0 0 1px rgba(62, 207, 142, 0.40),
+    0 8px 26px -8px rgba(62, 207, 142, 0.70);
+}
+
+/* Text and icons on the accent need a dark ink, not white — the green is
+   bright enough that white on it fails contrast. */
+[class*="bg-accent"]:not(input):not(textarea) {
+  color: #05140d;
+}
+
+/* ---- Controls ------------------------------------------------------------ */
+
+button,
+[role="button"],
+a[class*="bg-"],
+input,
+textarea,
+select {
+  border-radius: 0.625rem;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.12s ease;
+}
+
+button:active,
+[role="button"]:active {
+  transform: translateY(1px);
+}
+
+input,
+textarea,
+select {
+  background: color-mix(in oklab, var(--color-background) 70%, var(--color-surface));
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: color-mix(in oklab, var(--color-muted) 70%, transparent);
+}
+
+/* ---- Focus --------------------------------------------------------------- */
+
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
@@ -44,6 +159,8 @@ select:focus-visible {
   outline-offset: 1px;
 }
 
+/* ---- Mobile -------------------------------------------------------------- */
+
 /* iOS Safari zooms the whole page in when a focused field's text is under 16px,
    and never zooms back out. Fields are text-sm (14px) throughout, so raise them
    to 16px on phones and leave the desktop sizing alone. */
@@ -55,30 +172,30 @@ select:focus-visible {
   }
 }
 
-/* Panel — flat container. Replaces .glass / .glass-strong. */
-.panel {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-}
+/* ---- Motion -------------------------------------------------------------- */
 
-/* Kept as no-op aliases so existing markup degrades to plain surfaces
-   instead of breaking. Prefer .panel in new code. */
-.glass,
-.glass-strong {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-}
-
-.gradient-mesh {
-  background: none;
+/* Entrances stay quiet: a short rise and fade, once, on load. */
+@keyframes or-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
 }
 
 .animate-fade-in,
-.animate-slide-in,
-.animate-pulse-glow,
-.stagger > * {
+.animate-slide-in {
+  animation: or-fade-in 0.35s ease both;
+}
+
+.animate-pulse-glow {
   animation: none;
 }
+
+.stagger > * {
+  animation: or-fade-in 0.35s ease both;
+}
+.stagger > *:nth-child(2) { animation-delay: 0.04s; }
+.stagger > *:nth-child(3) { animation-delay: 0.08s; }
+.stagger > *:nth-child(4) { animation-delay: 0.12s; }
+.stagger > *:nth-child(5) { animation-delay: 0.16s; }
 
 @media (prefers-reduced-motion: reduce) {
   *,
