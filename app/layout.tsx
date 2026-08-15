@@ -32,7 +32,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`h-full ${inter.variable}`}>
+    <html lang="en" className={`h-full ${inter.variable}`} suppressHydrationWarning>
+      <head>
+        {/* Applies the saved theme before first paint. Anything later — an
+            effect, a server round trip — paints the default theme first and
+            then visibly swaps, which is worse than a blocking inline script
+            this small. Key must match THEME_STORAGE_KEY in theme-picker. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('oddnawn:theme');if(t&&t!=='blue')document.documentElement.dataset.theme=t}catch(e){}`,
+          }}
+        />
+      </head>
       <body className="min-h-full bg-background text-foreground font-sans antialiased">
         {children}
         <Analytics />

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Sidebar from "@/components/sidebar";
 import TopBar from "@/components/top-bar";
+import OnboardingTourMount from "@/components/onboarding-tour-mount";
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -48,6 +49,8 @@ export default function DashboardShell({
           </div>
         </main>
       </div>
+
+      <OnboardingTourMount />
     </div>
   );
 }

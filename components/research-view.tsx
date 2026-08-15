@@ -118,7 +118,9 @@ function Card({ pick, rank, hero }: { pick: Pick; rank: number; hero?: boolean }
   const media = pick.thumbnail ? (
     <div className="relative overflow-hidden rounded-xl border border-border bg-surface-hover">
       {hero && (
-        <span className="absolute left-2.5 top-2.5 z-10 rounded-full bg-foreground/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur">
+        // Fixed black rather than a theme token: this sits on a thumbnail, so
+        // it needs to stay legible whatever the page theme is doing.
+        <span className="absolute left-2.5 top-2.5 z-10 rounded-full bg-black/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur">
           Top pick
         </span>
       )}
@@ -396,11 +398,13 @@ export default function ResearchView({
           )}
 
           {data.pattern?.[platform] && (
-            <div className="mb-4 rounded-xl bg-foreground p-5">
+            // Tinted surface rather than an inverted panel: an inverted block
+            // assumes the page is light, and breaks outright on the dark theme.
+            <div className="mb-4 rounded-xl border-l-2 border-accent bg-surface-hover p-5">
               <h2 className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.13em] text-accent">
                 The pattern
               </h2>
-              <p className="max-w-[74ch] text-[15px] leading-relaxed text-white/85">
+              <p className="max-w-[74ch] text-[15px] leading-relaxed text-foreground">
                 {data.pattern[platform]}
               </p>
             </div>

@@ -9,8 +9,10 @@
  * the last one.
  */
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOutAction } from "@/lib/actions/session";
 
 /* Icons are inline rather than a package: eight 20px glyphs is not worth a
    dependency, and inlining keeps them on the same stroke and grid. */
@@ -139,6 +141,29 @@ export default function Sidebar({
   const displayName = instagramUsername ? `@${instagramUsername}` : workspaceName;
   const initial = (instagramUsername ?? workspaceName ?? "?").charAt(0).toUpperCase();
 
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close on an outside click or Escape — a menu that can only be dismissed by
+  // reopening it feels broken.
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    function onPointerDown(event: MouseEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMenuOpen(false);
+    }
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
+
   return (
     <>
       {/* Mobile overlay */}
@@ -159,11 +184,13 @@ export default function Sidebar({
       >
         {/* Connected account. This is the first thing on the page because it
             answers "whose data am I looking at" before anything else. */}
-        <div className="p-3">
-          <Link
-            href="/settings"
-            onClick={onClose}
-            className="flex items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 hover:border-border-hover"
+        <div className="relative p-3" ref={menuRef} data-tour="account">
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-expanded={menuOpen}
+            aria-haspopup="menu"
+            className="flex w-full items-center gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 text-left hover:border-border-hover"
           >
             {profilePictureUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -186,7 +213,62 @@ export default function Sidebar({
                 {userEmail ?? "Not connected"}
               </span>
             </span>
-          </Link>
+
+            <svg
+              className={`h-4 w-4 shrink-0 text-muted transition-transform ${menuOpen ? "rotate-180" : ""}`}
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <path d="m4 6 4 4 4-4" />
+            </svg>
+          </button>
+
+          {menuOpen && (
+            <div
+              role="menu"
+              className="panel absolute left-3 right-3 top-[calc(100%-0.25rem)] z-50 overflow-hidden p-1"
+            >
+              <Link
+                href="/settings"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onClose();
+                }}
+                className="block rounded-lg px-3 py-2 text-sm text-muted hover:bg-surface-hover hover:text-foreground"
+              >
+                Settings
+              </Link>
+              <Link
+                href="/tutorial"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onClose();
+                }}
+                className="block rounded-lg px-3 py-2 text-sm text-muted hover:bg-surface-hover hover:text-foreground"
+              >
+                How to use this
+              </Link>
+
+              <div className="nav-divider" />
+
+              <form action={signOutAction}>
+                <button
+                  type="submit"
+                  role="menuitem"
+                  className="block w-full rounded-lg px-3 py-2 text-left text-sm text-error hover:bg-surface-hover"
+                >
+                  Sign out
+                </button>
+              </form>
+            </div>
+          )}
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 pb-4">
@@ -204,6 +286,9 @@ export default function Sidebar({
                       href={href}
                       onClick={onClose}
                       aria-current={isActive ? "page" : undefined}
+                      // The onboarding tour finds its targets by this rather
+                      // than by class, so restyling the nav can't break it.
+                      data-tour={href.replace("/", "")}
                       className={`
                         flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm
                         ${

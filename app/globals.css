@@ -8,7 +8,12 @@
    is the ink, #edf0f4 is the ground, and the accents (green, coral, gold) are
    reserved for status. */
 
-@theme inline {
+/* `@theme`, deliberately not `@theme inline`.
+   `inline` bakes each literal value into the generated utilities, so bg-accent
+   would compile to a hard-coded blue and no [data-theme] override could reach
+   it — backgrounds would restyle while every button stayed blue. Plain @theme
+   emits var(--color-*) references, which is what makes the themes below work. */
+@theme {
   /* Grounds — the page is cool grey, cards are pure white. That contrast is
      what makes panels read as raised without needing a hard border. */
   --color-background: #f2f5f9;
@@ -39,8 +44,70 @@
   --font-mono: ui-monospace, monospace;
 }
 
+/* ---- Themes --------------------------------------------------------------
+   Each theme redefines only the tokens above; no component knows a theme
+   exists. Accents are picked to hold contrast against their own surface —
+   the light themes need a darker accent than the palette's raw value, because
+   a mid-tone accent with white label text fails on white.
+
+   Adding one is a block here plus an entry in components/theme-picker. */
+
 html {
   color-scheme: light;
+}
+
+/* Blue is the default and lives in the @theme block above. */
+
+:root[data-theme="orange"] {
+  --color-background: #faf6f2;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f4ece5;
+  --color-border: #ecdfd4;
+  --color-border-hover: #d8c3b2;
+  --color-foreground: #24160d;
+  --color-muted: #6b5545;
+  --color-accent: #dc5b05;
+  --color-accent-hover: #b34904;
+}
+
+:root[data-theme="green"] {
+  --color-background: #f2f8f5;
+  --color-surface: #ffffff;
+  --color-surface-hover: #e8f2ec;
+  --color-border: #dbe9e1;
+  --color-border-hover: #bcd4c6;
+  --color-foreground: #0e2419;
+  --color-muted: #46685a;
+  --color-accent: #0f9d6e;
+  --color-accent-hover: #0b7d57;
+}
+
+/* The one dark theme. Grounds are navy rather than grey so the blue accent
+   sits in the same family instead of fighting a neutral. */
+:root[data-theme="midnight"] {
+  color-scheme: dark;
+  --color-background: #0b1020;
+  --color-surface: #141b2e;
+  --color-surface-hover: #1d2740;
+  --color-border: #263250;
+  --color-border-hover: #38476b;
+  --color-foreground: #e6ecf7;
+  --color-muted: #93a1c0;
+  --color-accent: #4bb7fa;
+  --color-accent-hover: #3287f0;
+}
+
+/* On a dark ground the panel shadow does nothing; the border carries it. */
+:root[data-theme="midnight"] .panel,
+:root[data-theme="midnight"] .glass,
+:root[data-theme="midnight"] .glass-strong {
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.03) inset;
+}
+
+/* The blue accent is light enough here that dark ink wins on contrast — the
+   inverse of every light theme. */
+:root[data-theme="midnight"] [class*="bg-accent"]:not(input):not(textarea) {
+  color: #08111f;
 }
 
 body {
@@ -149,6 +216,23 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
   outline-offset: 1px;
+}
+
+/* ---- Theme switching ------------------------------------------------------
+
+   Applied for one frame while data-theme changes.
+
+   A transition does not restart when its value comes from a custom property
+   that changed on an ancestor — the browser keeps painting the previous
+   computed colour indefinitely. Because buttons transition background-color,
+   switching theme repainted the page around them while every button stayed the
+   old accent. Killing transitions for the instant of the swap avoids relying on
+   that behaviour at all, and the swap should be instant anyway. */
+.theme-switching,
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
 }
 
 /* ---- Sidebar ------------------------------------------------------------- */

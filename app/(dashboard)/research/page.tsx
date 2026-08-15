@@ -56,15 +56,22 @@ export default async function ResearchPage() {
             account&apos;s own median.
           </p>
         </div>
+        {/* Snapshots are stored per workspace, so this is what a new account
+            sees: their own empty page, never someone else's research. */}
         <div className="panel p-6">
-          <p className="text-sm font-medium">Nothing pushed yet</p>
-          <p className="mt-2 text-sm text-muted">
-            Research runs on your machine and is pushed here. From the
-            command-center project, run:
+          <p className="text-sm font-medium">No research yet</p>
+          <p className="mt-2 max-w-[62ch] text-sm text-muted">
+            This page fills up once a research run has been done for your own
+            competitor list. Results are private to your workspace — you will
+            never see another account&apos;s research here, and they will never
+            see yours.
           </p>
-          <pre className="mt-3 overflow-x-auto rounded bg-surface-hover p-3 text-xs">
-            npm run collect &amp;&amp; npm run push
-          </pre>
+          <p className="mt-3 max-w-[62ch] text-sm text-muted">
+            Runs happen on a connected machine rather than on this website,
+            because pulling the data needs tools a web server can&apos;t run.
+            Once one is set up and connected, the Run research button appears
+            here.
+          </p>
         </div>
       </div>
     );
