@@ -9,6 +9,8 @@ interface DashboardShellProps {
   workspaceName: string;
   instagramUsername: string | null;
   instagramAccountCount: number;
+  profilePictureUrl: string | null;
+  userEmail: string | null;
 }
 
 export default function DashboardShell({
@@ -16,6 +18,8 @@ export default function DashboardShell({
   workspaceName,
   instagramUsername,
   instagramAccountCount,
+  profilePictureUrl,
+  userEmail,
 }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -27,12 +31,14 @@ export default function DashboardShell({
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         workspaceName={workspaceName}
+        instagramUsername={instagramUsername}
+        profilePictureUrl={profilePictureUrl}
+        userEmail={userEmail}
       />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <TopBar
           onMenuClick={() => setSidebarOpen(true)}
-          instagramUsername={instagramUsername}
           instagramAccountCount={instagramAccountCount}
         />
 

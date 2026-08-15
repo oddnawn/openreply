@@ -14,6 +14,9 @@ const pageTitles: Record<string, string> = {
   "/campaigns/new": "New Campaign",
   "/automations": "Campaigns",
   "/automations/new": "New Campaign",
+  "/inbox": "Inbox",
+  "/overview": "Overview",
+  "/research": "Research",
   "/logs": "DM Logs",
   "/settings": "Settings",
   "/diagnostics": "Diagnostics",
@@ -21,13 +24,11 @@ const pageTitles: Record<string, string> = {
 
 interface TopBarProps {
   onMenuClick: () => void;
-  instagramUsername: string | null;
   instagramAccountCount: number;
 }
 
 export default function TopBar({
   onMenuClick,
-  instagramUsername,
   instagramAccountCount,
 }: TopBarProps) {
   const pathname = usePathname();
@@ -46,13 +47,15 @@ export default function TopBar({
         <h1 className="truncate text-base font-semibold sm:text-lg">{title}</h1>
       </div>
 
-      {instagramAccountCount > 0 ? (
+      {/* The connected account now lives in the sidebar card, so the only thing
+          left worth putting here is the call to action when there isn't one.
+          Multiple accounts still get a count, since the card shows only the
+          most recent. */}
+      {instagramAccountCount > 1 ? (
         <p className="shrink-0 truncate text-sm text-muted">
-          {instagramAccountCount > 1
-            ? `${instagramAccountCount} accounts`
-            : `@${instagramUsername}`}
+          {instagramAccountCount} accounts
         </p>
-      ) : (
+      ) : instagramAccountCount === 1 ? null : (
         <a
           href="/api/instagram/connect"
           className="shrink-0 whitespace-nowrap text-sm font-medium px-3 py-1.5 rounded bg-accent text-white hover:bg-accent-hover"

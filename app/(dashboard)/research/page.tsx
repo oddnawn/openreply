@@ -48,6 +48,12 @@ interface ResearchPayload {
   top?: Pick[];
 }
 
+/* Kept out of the component body: reading the clock during render is impure,
+   and the lint rule that flags it is right to. */
+function daysSince(when: Date): number {
+  return Math.floor((Date.now() - when.getTime()) / 86_400_000);
+}
+
 function Stat({ label, value, dim }: { label: string; value: string; dim?: boolean }) {
   return (
     <div className="panel rounded p-4">
@@ -100,9 +106,7 @@ export default async function ResearchPage() {
 
   // Judge staleness against when the research was gathered, not when it was
   // uploaded — re-pushing an old run must not make it look fresh.
-  const ageDays = Math.floor(
-    (Date.now() - new Date(snapshot.fetchedAt).getTime()) / 86_400_000
-  );
+  const ageDays = daysSince(new Date(snapshot.fetchedAt));
 
   return (
     <div className="space-y-6">

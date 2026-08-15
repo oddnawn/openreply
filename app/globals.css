@@ -1,37 +1,46 @@
 @import "tailwindcss";
 
 /* OpenReply — Design System
-   Dark, calm, one saturated accent. Depth comes from layered surfaces and a
-   single ambient glow, not from borders shouting for attention. */
+   Light, airy, one saturated blue. White cards float on a cool grey ground;
+   structure comes from soft shadows and hairlines, not from heavy chrome.
+
+   Palette drawn from the two reference sets: blue #0a60f7 leads, navy #111634
+   is the ink, #edf0f4 is the ground, and the accents (green, coral, gold) are
+   reserved for status. */
 
 @theme inline {
-  /* Grounds — near-black with a faint cool cast, so it reads as considered
-     rather than as pure #000. */
-  --color-background: #08090a;
-  --color-surface: #111315;
-  --color-surface-hover: #191c1f;
+  /* Grounds — the page is cool grey, cards are pure white. That contrast is
+     what makes panels read as raised without needing a hard border. */
+  --color-background: #f2f5f9;
+  --color-surface: #ffffff;
+  --color-surface-hover: #edf0f4;
 
   /* Hairlines. Low contrast on purpose: structure should be felt, not read. */
-  --color-border: #22262a;
-  --color-border-hover: #323840;
+  --color-border: #e2e7ef;
+  --color-border-hover: #cdd5e1;
 
-  --color-foreground: #f2f4f3;
-  --color-muted: #8b9299;
+  /* Ink is navy rather than black — it sits better against blue than #000. */
+  --color-foreground: #111634;
+  --color-muted: #464b5b;
 
   /* The one saturated thing on the page. */
-  --color-accent: #3ecf8e;
-  --color-accent-hover: #34b87b;
+  --color-accent: #0a60f7;
+  --color-accent-hover: #0337b7;
 
-  --color-success: #3ecf8e;
-  --color-error: #f87171;
-  --color-warning: #fbbf24;
+  /* Reserved for state, never for decoration. */
+  --color-success: #41ce96;
+  --color-error: #e72923;
+  --color-warning: #ddc072;
 
-  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Inter stands in for Altmann Grotesk, which is a licensed font and not on
+     this machine. To swap: drop the files in app/fonts, load them with
+     next/font/local, and change the first name in this stack. */
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, monospace;
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
@@ -41,24 +50,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Ambient glow — one soft green bloom behind everything, fixed so it doesn't
-   travel on scroll. This is what stops a dark page from reading as flat grey. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    radial-gradient(60rem 32rem at 50% -12%, rgba(62, 207, 142, 0.10), transparent 70%),
-    radial-gradient(40rem 24rem at 100% 0%, rgba(62, 207, 142, 0.05), transparent 65%);
-}
-
-/* Keep real content above the bloom. */
-body > * {
-  position: relative;
-  z-index: 1;
-}
+/* The dark build carried an ambient green bloom to stop near-black reading as
+   flat grey. A light ground doesn't have that problem, and a wash of colour
+   behind white cards muddies them — so there is deliberately no glow here. */
 
 /* ---- Surfaces ------------------------------------------------------------ */
 
@@ -70,13 +64,13 @@ body > * {
   border: 1px solid var(--color-border);
   border-radius: 0.875rem;
   box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.03) inset,
-    0 8px 24px -12px rgba(0, 0, 0, 0.7);
+    0 1px 2px 0 rgba(17, 22, 52, 0.04),
+    0 8px 24px -16px rgba(17, 22, 52, 0.18);
 }
 
 .glass,
 .glass-strong {
-  background: color-mix(in oklab, var(--color-surface) 82%, transparent);
+  background: color-mix(in oklab, var(--color-surface) 88%, transparent);
   backdrop-filter: blur(12px);
 }
 
@@ -87,29 +81,25 @@ body > * {
 
 .gradient-mesh {
   background:
-    radial-gradient(48rem 28rem at 50% 0%, rgba(62, 207, 142, 0.12), transparent 70%);
+    radial-gradient(48rem 28rem at 50% 0%, rgba(10, 96, 247, 0.07), transparent 70%);
 }
 
 /* ---- Accent -------------------------------------------------------------- */
 
-/* The accent carries a glow so primary actions read as the live thing on the
-   page. Kept tight so it reads as emission, not as a blurry halo. */
+/* A tight lift under primary actions so they read as the live thing on the
+   page. Softer than the dark build's glow — on white, a halo looks like a bug. */
 [class*="bg-accent"] {
-  box-shadow:
-    0 0 0 1px rgba(62, 207, 142, 0.28),
-    0 6px 20px -8px rgba(62, 207, 142, 0.55);
+  box-shadow: 0 6px 16px -8px rgba(10, 96, 247, 0.55);
 }
 
 [class*="bg-accent"]:hover {
-  box-shadow:
-    0 0 0 1px rgba(62, 207, 142, 0.40),
-    0 8px 26px -8px rgba(62, 207, 142, 0.70);
+  box-shadow: 0 8px 22px -8px rgba(10, 96, 247, 0.70);
 }
 
-/* Text and icons on the accent need a dark ink, not white — the green is
-   bright enough that white on it fails contrast. */
+/* Inverted from the dark build: the blue is dark enough that white wins on
+   contrast, where the old green needed dark ink. */
 [class*="bg-accent"]:not(input):not(textarea) {
-  color: #05140d;
+  color: #ffffff;
 }
 
 /* ---- Controls ------------------------------------------------------------ */
@@ -133,15 +123,17 @@ button:active,
   transform: translateY(1px);
 }
 
+/* Fields recess slightly into the card rather than floating on it. */
 input,
 textarea,
 select {
-  background: color-mix(in oklab, var(--color-background) 70%, var(--color-surface));
+  background: var(--color-surface-hover);
+  border-color: var(--color-border);
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: color-mix(in oklab, var(--color-muted) 70%, transparent);
+  color: color-mix(in oklab, var(--color-muted) 60%, transparent);
 }
 
 /* ---- Focus --------------------------------------------------------------- */
@@ -157,6 +149,14 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
   outline-offset: 1px;
+}
+
+/* ---- Sidebar ------------------------------------------------------------- */
+
+/* Dashed rules group the nav without the hard cut a solid border makes. */
+.nav-divider {
+  border-top: 1px dashed var(--color-border-hover);
+  margin: 0.75rem 0.25rem;
 }
 
 /* ---- Mobile -------------------------------------------------------------- */

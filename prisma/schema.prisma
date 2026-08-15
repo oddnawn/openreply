@@ -158,6 +158,11 @@ model InstagramAccount {
   instagramId       String   @unique
   username          String
   name              String?
+  /// Cached from the Graph API at connect and on each token refresh. Stored
+  /// rather than fetched per request: the dashboard layout renders on every
+  /// page, and a Graph call there would put an external API on the critical
+  /// path. Null until the first refresh populates it.
+  profilePictureUrl String?
   accessToken       String
   tokenExpiresAt    DateTime?
   webhookSubscribed Boolean  @default(false)
