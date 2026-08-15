@@ -541,6 +541,42 @@ export async function getConversationMessages(
   return data.messages?.data ?? [];
 }
 
+export interface InstagramContactProfile {
+  id: string;
+  name?: string;
+  username?: string;
+  profile_pic?: string;
+}
+
+/**
+ * Profile details for someone who has messaged the account.
+ *
+ * This is the Messaging user-profile lookup, not the media/user graph: the
+ * field is `profile_pic`, not `profile_picture_url`, and it only resolves for
+ * IGSIDs inside an existing conversation. It commonly fails for accounts that
+ * restrict their profile, so callers should treat a rejection as "no photo"
+ * rather than as an error worth surfacing.
+ *
+ * Meta's returned URLs are short-lived and signed — they must be displayed,
+ * not stored.
+ */
+export async function getContactProfile(
+  accessToken: string,
+  igsid: string
+): Promise<InstagramContactProfile | null> {
+  const url = new URL(`${instagramGraphBase()}/${igsid}`);
+  url.searchParams.set("fields", "name,username,profile_pic");
+  url.searchParams.set("access_token", accessToken);
+
+  try {
+    const response = await fetch(url.toString());
+    if (!response.ok) return null;
+    return (await response.json()) as InstagramContactProfile;
+  } catch {
+    return null;
+  }
+}
+
 export async function getUserInfo(accessToken: string): Promise<InstagramUser> {
   const url = new URL(`${instagramGraphBase()}/me`);
   url.searchParams.set(

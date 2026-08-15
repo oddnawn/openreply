@@ -85,8 +85,42 @@ model Workspace {
   webhookEvents     WebhookEvent[]
   operationalEvents OperationalEvent[]
   ingestSnapshots   IngestSnapshot[]
+  researchRuns      ResearchRun[]
 
   @@index([ownerId])
+}
+
+/// A request to re-run competitor research, made from the dashboard.
+///
+/// The research itself cannot run here: it shells out to Python, yt-dlp and
+/// ffmpeg, and bills Apify per result. So the button only enqueues. A watcher
+/// on the operator's machine claims the job, runs the pipeline, pushes the
+/// result to /api/ingest and reports back.
+///
+/// This means a queued run sits untouched until that machine is on with the
+/// watcher running. The dashboard says so rather than spinning forever.
+model ResearchRun {
+  id          String            @id @default(cuid())
+  workspaceId String
+  status      ResearchRunStatus @default(QUEUED)
+  platform    String            @default("both")
+  days        Int               @default(30)
+  message     String?
+  requestedAt DateTime          @default(now())
+  startedAt   DateTime?
+  finishedAt  DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, status])
+  @@index([requestedAt])
+}
+
+enum ResearchRunStatus {
+  QUEUED
+  RUNNING
+  DONE
+  FAILED
 }
 
 /// A payload pushed in from outside the deployed app.

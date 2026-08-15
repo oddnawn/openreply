@@ -85,6 +85,14 @@ function IconPulse() {
   );
 }
 
+function IconBook() {
+  return (
+    <svg className={icon} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" aria-hidden>
+      <path d="M3 4.5A1.5 1.5 0 0 1 4.5 3H9v14H4.5A1.5 1.5 0 0 1 3 15.5ZM17 4.5A1.5 1.5 0 0 0 15.5 3H11v14h4.5a1.5 1.5 0 0 0 1.5-1.5Z" />
+    </svg>
+  );
+}
+
 interface NavItem {
   label: string;
   href: string;
@@ -106,6 +114,7 @@ const navGroups: NavItem[][] = [
   [
     { label: "Settings", href: "/settings", Icon: IconGear },
     { label: "Diagnostics", href: "/diagnostics", Icon: IconPulse },
+    { label: "Tutorial", href: "/tutorial", Icon: IconBook },
   ],
 ];
 

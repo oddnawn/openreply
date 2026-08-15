@@ -3,14 +3,36 @@ import { getCurrentWorkspaceId } from "@/lib/auth";
 import { getWorkspaceInstagramAccount } from "@/lib/instagram-accounts";
 import {
   getConversations,
+  getContactProfile,
   sendDirectMessage,
   MetaApiError,
 } from "@/lib/meta/client";
 import { decryptToken } from "@/lib/meta/oauth";
 
+/**
+ * Contact photos are fetched one IGSID at a time — Meta exposes no batch form
+ * — so they're cached in module memory. Without this, every 12-second inbox
+ * poll would fire one extra request per conversation.
+ *
+ * The URLs Meta returns are signed and expire, hence the short TTL. A serverless
+ * instance may cold-start and lose this, which costs a refetch and nothing else.
+ */
+const photoCache = new Map<string, { url: string | null; at: number }>();
+const PHOTO_TTL_MS = 10 * 60 * 1000;
+
+async function contactPhoto(accessToken: string, igsid: string): Promise<string | null> {
+  const hit = photoCache.get(igsid);
+  if (hit && Date.now() - hit.at < PHOTO_TTL_MS) return hit.url;
+
+  const profile = await getContactProfile(accessToken, igsid);
+  const url = profile?.profile_pic ?? null;
+  photoCache.set(igsid, { url, at: Date.now() });
+  return url;
+}
+
 export interface ConversationListItem {
   id: string;
-  contact: { id: string; username: string | null };
+  contact: { id: string; username: string | null; profilePic: string | null };
   updatedTime: string | null;
   lastMessage: {
     text: string;
@@ -49,19 +71,30 @@ export async function GET(request: NextRequest) {
     const accessToken = decryptToken(account.accessToken);
     const raw = await getConversations(accessToken, account.instagramId);
 
-    const conversations: ConversationListItem[] = raw.map((c) => {
+    const shaped = raw.map((c) => {
       const participants = c.participants?.data ?? [];
       const contact =
         participants.find((p) => p.id !== account.instagramId) ??
         participants[0] ??
         null;
-      const last = c.messages?.data?.[0] ?? null;
+      return { c, contact, last: c.messages?.data?.[0] ?? null };
+    });
 
+    // Resolved in parallel, but only for contacts we actually have an id for.
+    // A failed lookup yields null and the UI falls back to an initial.
+    const photos = await Promise.all(
+      shaped.map(({ contact }) =>
+        contact?.id ? contactPhoto(accessToken, contact.id) : Promise.resolve(null)
+      )
+    );
+
+    const conversations: ConversationListItem[] = shaped.map(({ c, contact, last }, i) => {
       return {
         id: c.id,
         contact: {
           id: contact?.id ?? "",
           username: contact?.username ?? null,
+          profilePic: photos[i],
         },
         updatedTime: c.updated_time ?? null,
         lastMessage: last

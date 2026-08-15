@@ -35,6 +35,42 @@ function formatTime(iso: string | null): string {
     : d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
+/**
+ * Contact avatar with an initial as the fallback.
+ *
+ * Meta's profile_pic URLs are signed and expire, and they 403 rather than
+ * 404 when they do — so a broken image here is expected, not exceptional.
+ * onError swaps to the initial instead of leaving a torn-image icon.
+ */
+function Avatar({
+  src,
+  username,
+}: {
+  src: string | null;
+  username: string | null;
+}) {
+  const [failed, setFailed] = useState(false);
+  const initial = (username ?? "?").charAt(0).toUpperCase();
+
+  if (!src || failed) {
+    return (
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-hover text-xs font-semibold text-muted">
+        {initial}
+      </span>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      onError={() => setFailed(true)}
+      className="h-9 w-9 shrink-0 rounded-full object-cover"
+    />
+  );
+}
+
 export default function InboxPage() {
   const [accounts, setAccounts] = useState<AccountOption[]>([]);
   // Seed from the last-used account so a revisit can paint the cached
@@ -300,20 +336,28 @@ export default function InboxPage() {
                       isActive ? "bg-surface-hover" : "hover:bg-surface-hover"
                     }`}
                   >
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="truncate text-sm font-medium text-foreground">
-                        @{c.contact.username ?? "unknown"}
-                      </span>
-                      <span className="shrink-0 text-[11px] text-zinc-500">
-                        {formatTime(c.updatedTime)}
-                      </span>
+                    <div className="flex items-start gap-3">
+                      <Avatar
+                        src={c.contact.profilePic}
+                        username={c.contact.username}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="truncate text-sm font-medium text-foreground">
+                            @{c.contact.username ?? "unknown"}
+                          </span>
+                          <span className="shrink-0 text-[11px] text-muted">
+                            {formatTime(c.updatedTime)}
+                          </span>
+                        </div>
+                        {c.lastMessage && (
+                          <p className="mt-0.5 truncate text-xs text-muted">
+                            {c.lastMessage.fromMe ? "You: " : ""}
+                            {c.lastMessage.text || "(no text)"}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    {c.lastMessage && (
-                      <p className="mt-0.5 truncate text-xs text-muted">
-                        {c.lastMessage.fromMe ? "You: " : ""}
-                        {c.lastMessage.text || "(no text)"}
-                      </p>
-                    )}
                   </button>
                 );
               })
@@ -341,6 +385,10 @@ export default function InboxPage() {
                 >
                   Back
                 </button>
+                <Avatar
+                  src={active.contact.profilePic}
+                  username={active.contact.username}
+                />
                 <span className="truncate">
                   @{active.contact.username ?? "unknown"}
                 </span>
