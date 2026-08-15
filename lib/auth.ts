@@ -35,6 +35,15 @@ export const authConfig = {
   },
   session: {
     strategy: "database",
+    // Signing in means waiting on an email, so the session is deliberately long
+    // and rolling: 90 days, refreshed at most once a day on any visit. Someone
+    // who opens this weekly never sees the login screen again.
+    //
+    // Note this is separate from *where* the cookie lands. A session set on one
+    // hostname is invisible on another, so if logins stop persisting after a
+    // domain change, check NEXTAUTH_URL before touching these numbers.
+    maxAge: 90 * 24 * 60 * 60,
+    updateAge: 24 * 60 * 60,
   },
   trustHost: true,
   secret: process.env.NEXTAUTH_SECRET,
