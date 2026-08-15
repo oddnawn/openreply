@@ -84,8 +84,36 @@ model Workspace {
   linkClicks        LinkClick[]
   webhookEvents     WebhookEvent[]
   operationalEvents OperationalEvent[]
+  ingestSnapshots   IngestSnapshot[]
 
   @@index([ownerId])
+}
+
+/// A payload pushed in from outside the deployed app.
+///
+/// Competitor research and Gmail triage both originate on the operator's own
+/// machine — the research output is a folder of local files, and Gmail arrives
+/// through a connector that only exists where the agent runs. A Vercel function
+/// can reach neither. So the laptop collects, POSTs to /api/ingest, and the
+/// hosted pages render whatever was last pushed.
+///
+/// One row per source per workspace, overwritten on each push: this is a
+/// snapshot, not a history. `fetchedAt` is when the data was gathered at the
+/// source, which is what staleness should be judged against — not `updatedAt`,
+/// which only records when it arrived.
+model IngestSnapshot {
+  id          String   @id @default(cuid())
+  workspaceId String
+  source      String
+  payload     Json
+  fetchedAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, source])
+  @@index([workspaceId])
 }
 
 model WorkspaceMember {
