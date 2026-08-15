@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { getPublicBaseUrl } from "@/lib/public-url";
 
 const INVITE_TTL_DAYS = 14;
 
@@ -19,9 +20,7 @@ export function getInvitationExpiry() {
 export function buildInvitationUrl(token: string, baseUrl?: string) {
   const resolvedBaseUrl =
     baseUrl ??
-    (typeof window !== "undefined"
-      ? window.location.origin
-      : process.env.NEXTAUTH_URL ?? "http://localhost:3000");
+    (typeof window !== "undefined" ? window.location.origin : getPublicBaseUrl());
 
   return `${resolvedBaseUrl.replace(/\/$/, "")}/invite/${token}`;
 }

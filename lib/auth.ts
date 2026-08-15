@@ -1,3 +1,9 @@
+// Side-effect import, and it must stay above NextAuth(). It clears
+// AUTH_URL/NEXTAUTH_URL so `trustHost` derives the URL from the request instead
+// of from a value that goes stale whenever the domain changes. See the module
+// for the incident this prevents.
+import "@/lib/public-url";
+
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import type { Provider } from "next-auth/providers";
 import Resend from "next-auth/providers/resend";

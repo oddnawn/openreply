@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { getPublicBaseUrl } from "@/lib/public-url";
 
 const HEX_32_BYTE = /^[a-f0-9]{64}$/i;
 
@@ -15,7 +16,7 @@ export function requireEnv(name: string): string {
 }
 
 export function getBaseUrl(): string {
-  return process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  return getPublicBaseUrl();
 }
 
 export function getEncryptionKeyHex(): string {
@@ -51,7 +52,11 @@ export function getMetaGraphApiVersion(): string {
 }
 
 export const serverEnvSchema = z.object({
-  NEXTAUTH_URL: z.string().url(),
+  // Optional on purpose. lib/public-url removes it from the environment so
+  // Auth.js infers the host per request instead, and Vercel supplies the
+  // production domain for link building. Requiring it here would fail
+  // validation for a deployment that is working correctly without it.
+  NEXTAUTH_URL: z.string().url().optional(),
   NEXTAUTH_SECRET: z.string().min(16),
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1),

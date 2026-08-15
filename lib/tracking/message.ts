@@ -1,3 +1,5 @@
+import { getPublicBaseUrl } from "@/lib/public-url";
+
 export interface MessageTrackedLink {
   slug: string;
   destinationUrl: string;
@@ -54,9 +56,7 @@ export function renderMessageWithoutLink({
 export function buildTrackedUrl(slug: string, baseUrl?: string) {
   const resolvedBaseUrl =
     baseUrl ??
-    (typeof window !== "undefined"
-      ? window.location.origin
-      : process.env.NEXTAUTH_URL ?? "http://localhost:3000");
+    (typeof window !== "undefined" ? window.location.origin : getPublicBaseUrl());
 
   return `${resolvedBaseUrl.replace(/\/$/, "")}/r/${slug}`;
 }
