@@ -1,19 +1,47 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
+import type { Provider } from "next-auth/providers";
 import Resend from "next-auth/providers/resend";
+import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/db/client";
 import { ensureWorkspaceForUser, getPrimaryWorkspace } from "@/lib/workspace";
 
 type AdapterPrismaClient = Parameters<typeof PrismaAdapter>[0];
 
+/**
+ * Google sign-in is optional so a self-hoster without Google credentials still
+ * gets a working app — the email link alone is enough to run this.
+ */
+export function isGoogleEnabled(): boolean {
+  return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+}
+
+const providers: Provider[] = [
+  Resend({
+    apiKey: process.env.RESEND_API_KEY ?? "missing-resend-api-key",
+    from: process.env.EMAIL_FROM ?? "OpenReply <login@example.com>",
+  }),
+];
+
+if (isGoogleEnabled()) {
+  providers.push(
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      // Links a Google login to an existing account with the same address
+      // instead of rejecting it with OAuthAccountNotLinked. Accounts here are
+      // created by emailing that address a link, so anyone who could sign in
+      // by email already controls the mailbox; Google verifies the address it
+      // reports, so this grants no access that the email flow did not. Without
+      // it, an operator who signed up by email simply cannot use this button.
+      allowDangerousEmailAccountLinking: true,
+    })
+  );
+}
+
 export const authConfig = {
   adapter: PrismaAdapter(prisma as unknown as AdapterPrismaClient),
-  providers: [
-    Resend({
-      apiKey: process.env.RESEND_API_KEY ?? "missing-resend-api-key",
-      from: process.env.EMAIL_FROM ?? "OpenReply <login@example.com>",
-    }),
-  ],
+  providers,
   callbacks: {
     async session({ session, user }) {
       if (session.user) {
