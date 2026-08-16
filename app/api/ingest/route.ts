@@ -24,6 +24,11 @@ const bodySchema = z.object({
   source: z.enum(KNOWN_SOURCES),
   fetchedAt: z.string().datetime(),
   payload: z.unknown(),
+  // Optional, and the only way to be unambiguous once more than one workspace
+  // exists — which happens the moment the operator signs in with a second
+  // email. Without it this endpoint used to refuse outright, which turned a
+  // second login into a silently broken push.
+  workspaceId: z.string().min(1).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -55,7 +60,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { source, fetchedAt, payload } = parsed.data;
+  const { source, fetchedAt, payload, workspaceId: requested } = parsed.data;
 
   const size = Buffer.byteLength(JSON.stringify(payload ?? null));
   if (size > MAX_PAYLOAD_BYTES) {
@@ -65,12 +70,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Self-hosted single-tenant: there is exactly one workspace. Refuse rather
-  // than guess if that ever stops being true, so a push can't silently land in
-  // the wrong place.
+  // Resolve the target workspace. An explicit id always wins; otherwise this
+  // only auto-selects when the choice is unambiguous. It still refuses to guess
+  // between several — but now it names them, so the caller can pick one and
+  // pin it, rather than being told "no" with nothing to act on.
   const workspaces = await prisma.workspace.findMany({
-    select: { id: true },
-    take: 2,
+    select: { id: true, name: true },
+    orderBy: { createdAt: "asc" },
   });
 
   if (workspaces.length === 0) {
@@ -79,14 +85,34 @@ export async function POST(request: NextRequest) {
       { status: 409 }
     );
   }
-  if (workspaces.length > 1) {
+
+  let workspaceId: string;
+
+  if (requested) {
+    if (!workspaces.some((w) => w.id === requested)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `No workspace with id ${requested}`,
+          workspaces,
+        },
+        { status: 404 }
+      );
+    }
+    workspaceId = requested;
+  } else if (workspaces.length === 1) {
+    workspaceId = workspaces[0].id;
+  } else {
     return NextResponse.json(
-      { success: false, error: "More than one workspace exists; /api/ingest cannot pick one" },
+      {
+        success: false,
+        error:
+          "Several workspaces exist, so this push would be ambiguous. Set INGEST_WORKSPACE_ID to one of the ids below.",
+        workspaces,
+      },
       { status: 409 }
     );
   }
-
-  const workspaceId = workspaces[0].id;
 
   await prisma.ingestSnapshot.upsert({
     where: { workspaceId_source: { workspaceId, source } },
