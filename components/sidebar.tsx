@@ -45,6 +45,15 @@ function IconInbox() {
   );
 }
 
+function IconMail() {
+  return (
+    <svg className={icon} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" aria-hidden>
+      <rect x="2.5" y="4.5" width="15" height="11" rx="2" />
+      <path d="m3 6 7 4.5L17 6" />
+    </svg>
+  );
+}
+
 function IconResearch() {
   return (
     <svg className={icon} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
@@ -107,6 +116,7 @@ const navGroups: NavItem[][] = [
     { label: "Dashboard", href: "/dashboard", Icon: IconGrid },
     { label: "Overview", href: "/overview", Icon: IconChart },
     { label: "Inbox", href: "/inbox", Icon: IconInbox },
+    { label: "Mail", href: "/mail", Icon: IconMail },
     { label: "Research", href: "/research", Icon: IconResearch },
   ],
   [

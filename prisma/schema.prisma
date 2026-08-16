@@ -86,8 +86,35 @@ model Workspace {
   operationalEvents OperationalEvent[]
   ingestSnapshots   IngestSnapshot[]
   researchRuns      ResearchRun[]
+  googleConnections GoogleConnection[]
 
   @@index([ownerId])
+}
+
+/// A connected Google account, for reading and triaging Gmail.
+///
+/// Tokens are encrypted at rest with the same ENCRYPTION_KEY and the same
+/// AES-256-GCM helper as the Instagram token, so there is one secret to rotate
+/// rather than two schemes to keep straight.
+///
+/// The refresh token is the valuable one: access tokens die in an hour, the
+/// refresh token is indefinite until revoked. Google only issues it on the
+/// first consent, so it is never overwritten with null on reconnect.
+model GoogleConnection {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  email        String
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime
+  scope        String
+  connectedAt  DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, email])
+  @@index([workspaceId])
 }
 
 /// A request to re-run competitor research, made from the dashboard.
