@@ -87,6 +87,11 @@ export async function GET() {
         message: true,
         createdAt: true,
         resolvedAt: true,
+        // Without payload these events are undebuggable. A webhook signature
+        // failure records hadSignatureHeader and a body preview, which is the
+        // only way to tell a missing signature header apart from a wrong app
+        // secret — the two have identical log messages otherwise.
+        payload: true,
       },
     }),
   ]);
