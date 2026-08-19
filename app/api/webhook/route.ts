@@ -1,3 +1,4 @@
+import { createHmac } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/client";
 import { getDMQueue } from "@/lib/queue/client";
@@ -47,6 +48,29 @@ export async function POST(request: NextRequest) {
             hadSignatureHeader: Boolean(signature),
             bodyLength: rawBody.length,
             bodyPreview: rawBody.slice(0, 200),
+            // Which secrets the running deployment actually loaded, and how
+            // their HMACs compare to Meta's. Lengths (not values) surface a
+            // pasted-together or truncated secret; the truncated digests show
+            // whether either key is the right one without leaking anything.
+            secretLengths: {
+              facebook: (process.env.FACEBOOK_APP_SECRET || "").length,
+              instagram: (process.env.INSTAGRAM_APP_SECRET || "").length,
+            },
+            receivedSig: (signature || "").slice(0, 20),
+            expectedFacebook: process.env.FACEBOOK_APP_SECRET
+              ? "sha256=" +
+                createHmac("sha256", process.env.FACEBOOK_APP_SECRET)
+                  .update(rawBody)
+                  .digest("hex")
+                  .slice(0, 13)
+              : null,
+            expectedInstagram: process.env.INSTAGRAM_APP_SECRET
+              ? "sha256=" +
+                createHmac("sha256", process.env.INSTAGRAM_APP_SECRET)
+                  .update(rawBody)
+                  .digest("hex")
+                  .slice(0, 13)
+              : null,
           },
         },
       })
